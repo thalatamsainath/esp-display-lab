@@ -1,0 +1,13 @@
+{
+  "nasName": "SYNOLOGY",
+  "volume1UsedTB": "5.4",
+  "volume1TotalTB": "8",
+  "volume1Status": "normal",
+  "volume2UsedTB": "1.2",
+  "volume2TotalTB": "4",
+  "volume2Status": "normal",
+  "rxMBps": "12.4",
+  "txMBps": "1.8",
+  "driveTemps": "38,36,40,34",
+  "storageWarnings": ""
+}

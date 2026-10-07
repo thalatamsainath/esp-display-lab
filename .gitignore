@@ -1,0 +1,23 @@
+# Per-device credentials and configuration
+**/ota_credentials.h
+**/sender-config.json
+**/config.json
+.env
+.env.*
+*.local.*
+*.lock
+# Generated firmware and downloaded tools
+/build/
+/.arduino/
+/toolchains/
+*.bin
+*.elf
+*.map
+*.zip
+*.tar.gz
+# Logs can contain private prompts, device names and network details
+*.jsonl
+*.log
+**/__pycache__/
+*.pyc
+.DS_Store

@@ -1,0 +1,39 @@
+name: Check source and firmware
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: sh scripts/test.sh
+  firmware:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sample: [synology, limits]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: '1.5.1'
+      - name: Install pinned core and display library
+        run: |
+          arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core install esp8266:esp8266@3.1.2 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli lib install TFT_eSPI@2.5.43
+      - name: Build with temporary CI credentials
+        run: |
+          python3 scripts/generate_ota_credentials.py "${{ matrix.sample }}"
+          sh scripts/build_firmware.sh "${{ matrix.sample }}"
+# No upload-artifact step: a compiled image contains its temporary password.

@@ -1,0 +1,15 @@
+{
+  "display_url": "http://192.168.1.50",
+  "nas_name": "SYNOLOGY",
+  "snmp_host": "127.0.0.1",
+  "snmp_port": 161,
+  "snmp_community": "CHANGE_ME",
+  "volume1_path": "/volume1",
+  "volume2_path": "/volume2",
+  "volume1_raid_name": "volume1",
+  "volume2_raid_name": "volume2",
+  "network_interfaces": [],
+  "expected_drive_names": [],
+  "require_disk_health": true,
+  "interval_seconds": 30
+}
