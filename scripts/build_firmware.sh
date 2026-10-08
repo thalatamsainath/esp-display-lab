@@ -4,8 +4,8 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 sample=${1:-synology}
 case "$sample" in
   synology) sketch=esp_synology_display ;;
-  limits) sketch=esp_ai_limits ;;
-  *) echo 'Usage: sh scripts/build_firmware.sh [synology|limits]' >&2; exit 2 ;;
+  trains) sketch=esp_train_departures ;;
+  *) echo 'Usage: sh scripts/build_firmware.sh [synology|trains]' >&2; exit 2 ;;
 esac
 arduino_cli=${ARDUINO_CLI:-arduino-cli}
 credentials="$repo_root/firmware/$sketch/ota_credentials.h"
@@ -19,6 +19,9 @@ if grep -q 'CHANGE_ME' "$credentials"; then
 fi
 # TFT_eSPI's setup is applied to this build only, never to the global library.
 tft_flags='-DUSER_SETUP_LOADED -DST7789_DRIVER -DTFT_WIDTH=240 -DTFT_HEIGHT=240 -DTFT_MOSI=13 -DTFT_SCLK=14 -DTFT_CS=-1 -DTFT_DC=0 -DTFT_RST=2 -DTFT_BL=5 -DTFT_BACKLIGHT_ON=LOW -DLOAD_GLCD -DSMOOTH_FONT -DSPI_FREQUENCY=20000000'
+if [ "$sample" = trains ]; then
+  tft_flags="$tft_flags -DLOAD_FONT2 -DLOAD_FONT4 -DLOAD_FONT6"
+fi
 mkdir -p "$repo_root/build/$sample"
 export ARDUINO_BUILD_CACHE_PATH="${ARDUINO_BUILD_CACHE_PATH:-$repo_root/build/cache}"
 set -- compile --fqbn esp8266:esp8266:generic:eesz=4M1M,FlashMode=dio,FlashFreq=40 \

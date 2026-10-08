@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import secrets
 
-SKETCHES = {"synology": "esp_synology_display", "limits": "esp_ai_limits"}
+SKETCHES = {"synology": "esp_synology_display", "trains": "esp_train_departures"}
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

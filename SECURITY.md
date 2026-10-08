@@ -4,6 +4,8 @@ The sample firmware is intended for a trusted local network. Telemetry, status, 
 
 Updater credentials are generated locally into ignored `ota_credentials.h` files. They are embedded in every resulting firmware image. Publishing that header or a personalized binary reveals the updater password. Keep actual NAS SNMP community names in ignored local configuration; the NAS sender queries loopback and does not require a DSM administrator password.
 
+The train sample uses certificate-verified HTTPS for Realtime Trains. API credentials are entered in the local web UI after flashing and stored unencrypted in device EEPROM. They are not included in the compiled image; the updater credential still is. The local configuration page is not authenticated and belongs on a trusted LAN.
+
 Before sharing diagnostics, replace hostnames, device IPs, local user paths and session/provider data with fictional values. The public-tree script flags common patterns, but manual review is still required. No personal logs or photographs are included in the sample showcase.
 
 If a credential is exposed, remove it from the public material and history where appropriate, rotate it on the running device/service, and rebuild affected firmware. Removing a file alone does not revoke a credential.

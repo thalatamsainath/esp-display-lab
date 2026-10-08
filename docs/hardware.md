@@ -21,9 +21,11 @@ GPIO 0 and GPIO 2 also participate in ESP8266 boot strapping. Avoid changing the
 
 ## Wi-Fi and EEPROM
 
-Both samples keep the inherited credential layout: bytes 0–31 for SSID and bytes 32–95 for password. They connect as a station at boot, then provide an AP if connection fails. Wi-Fi is normally entered through the web UI rather than compiled into source.
+All samples keep the inherited credential layout: bytes 0–31 for SSID and bytes 32–95 for password. They connect as a station at boot, then provide an AP if connection fails. Wi-Fi is normally entered through the web UI rather than compiled into source.
 
-The NAS sample reserves byte 96 for marker `0xB4` and byte 97 for brightness, using an EEPROM length of 128. It preserves bytes 0–95 when saving brightness. The limits sample uses the 96-byte credential layout; switching to it can discard settings beyond that range. Document and preserve shared fields when adding a new sketch.
+The NAS sample reserves byte 96 for marker `0xB4` and byte 97 for brightness, using an EEPROM length of 128. It preserves bytes 0–95 when saving brightness. Document and preserve shared fields when adding a new sketch.
+
+The train sample uses the same brightness bytes and a 4 KiB allocation; its versioned rail settings begin at byte 128. Settings preserve the shared Wi-Fi bytes. Switching back to a shorter EEPROM allocation can discard those rail settings.
 
 Fallback AP: `MiniScreen-Setup`, default setup password `12345678`, setup page `http://192.168.4.1`. This is a public sample setup password, not a user's network credential. It can be customized consistently in your local firmware.
 

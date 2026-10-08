@@ -1,0 +1,81 @@
+{
+  "crs": "PAD",
+  "locationName": "London Paddington",
+  "generatedAt": "2026-10-08T10:42:00+01:00",
+  "platformAvailable": true,
+  "areServicesAvailable": true,
+  "trainServices": [
+    {
+      "std": "10:46",
+      "etd": "10:53",
+      "operatorCode": "GW",
+      "destination": [
+        {
+          "crs": "RDG",
+          "locationName": "Reading"
+        }
+      ],
+      "platform": "4",
+      "delayReason": "Late incoming train"
+    },
+    {
+      "std": "10:51",
+      "etd": "On time",
+      "operatorCode": "XR",
+      "destination": [
+        {
+          "crs": "ABW",
+          "locationName": "Abbey Wood"
+        }
+      ],
+      "platform": "4"
+    },
+    {
+      "std": "11:03",
+      "etd": "Cancelled",
+      "isCancelled": true,
+      "operatorCode": "GW",
+      "destination": [
+        {
+          "crs": "RDG",
+          "locationName": "Reading"
+        }
+      ],
+      "cancelReason": "Signalling fault"
+    },
+    {
+      "std": "11:18",
+      "etd": "On time",
+      "operatorCode": "XR",
+      "destination": [
+        {
+          "crs": "RDG",
+          "locationName": "Reading"
+        }
+      ],
+      "platform": "3"
+    },
+    {
+      "std": "11:05",
+      "etd": "Delayed",
+      "operatorCode": "GW",
+      "destination": [
+        {
+          "crs": "RDG",
+          "locationName": "Reading"
+        }
+      ]
+    },
+    {
+      "std": "11:10",
+      "etd": "On time",
+      "operatorCode": "ZZ",
+      "destination": [
+        {
+          "crs": "RDG",
+          "locationName": "Reading"
+        }
+      ]
+    }
+  ]
+}

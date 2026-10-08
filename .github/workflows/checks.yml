@@ -13,12 +13,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: sh scripts/test.sh
+      - name: Install pinned JSON headers for native rail parser checks
+        run: git clone --depth 1 --branch v6.21.5 https://github.com/bblanchon/ArduinoJson.git "$RUNNER_TEMP/ArduinoJson"
+      - run: ARDUINOJSON_INCLUDE="$RUNNER_TEMP/ArduinoJson/src" sh scripts/test.sh
   firmware:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        sample: [synology, limits]
+        sample: [synology, trains]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -32,6 +34,7 @@ jobs:
           arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
           arduino-cli core install esp8266:esp8266@3.1.2 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
           arduino-cli lib install TFT_eSPI@2.5.43
+          arduino-cli lib install ArduinoJson@6.21.5
       - name: Build with temporary CI credentials
         run: |
           python3 scripts/generate_ota_credentials.py "${{ matrix.sample }}"

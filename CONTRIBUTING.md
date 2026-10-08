@@ -9,7 +9,7 @@ Before committing:
 ```sh
 sh scripts/test.sh
 sh scripts/build_firmware.sh synology   # if this sample changed
-sh scripts/build_firmware.sh limits     # if this sample changed
+sh scripts/build_firmware.sh trains     # if this sample changed
 python3 scripts/check_public_tree.py
 git diff --cached --check
 git diff --cached

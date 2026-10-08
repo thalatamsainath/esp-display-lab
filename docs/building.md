@@ -2,16 +2,17 @@
 
 ## Versions and setup
 
-The reproducible reference is Arduino CLI 1.5.1, ESP8266 Arduino core 3.1.2, TFT_eSPI 2.5.43 and Python 3.9+. Install Arduino CLI from [its official installation guide](https://arduino.github.io/arduino-cli/latest/installation/), then run the core/library commands in the root README. Host tests additionally need `c++` (Xcode Command Line Tools on macOS or a C++ compiler on Linux). Run the shell scripts in a POSIX shell; Windows users can use a Linux environment configured with its own Arduino toolchain.
+The reproducible reference is Arduino CLI 1.5.1, ESP8266 Arduino core 3.1.2, TFT_eSPI 2.5.43, ArduinoJson 6.21.5 (trains only) and Python 3.9+. Install Arduino CLI from [its official installation guide](https://arduino.github.io/arduino-cli/latest/installation/), then run the core/library commands in the root README. Host tests additionally need `c++` (Xcode Command Line Tools on macOS or a C++ compiler on Linux). Run the shell scripts in a POSIX shell; Windows users can use a Linux environment configured with its own Arduino toolchain.
 
 ```sh
 python3 scripts/generate_ota_credentials.py synology
 sh scripts/build_firmware.sh synology
-python3 scripts/generate_ota_credentials.py limits
-sh scripts/build_firmware.sh limits
+arduino-cli lib install ArduinoJson@6.21.5
+python3 scripts/generate_ota_credentials.py trains
+sh scripts/build_firmware.sh trains
 ```
 
-The compile target is `esp8266:esp8266:generic:eesz=4M1M,FlashMode=dio,FlashFreq=40`. GPIO definitions in `scripts/build_firmware.sh` match [the hardware table](hardware.md). `USER_SETUP_LOADED` bypasses TFT_eSPI's global `User_Setup.h`, so builds do not alter another project's library installation. Only the GLCD font is required.
+The compile target is `esp8266:esp8266:generic:eesz=4M1M,FlashMode=dio,FlashFreq=40`. GPIO definitions in `scripts/build_firmware.sh` match [the hardware table](hardware.md). `USER_SETUP_LOADED` bypasses TFT_eSPI's global `User_Setup.h`, so builds do not alter another project's library installation. All samples use GLCD; trains additionally enables TFT_eSPI's built-in fonts 2, 4 and 6 for readable labels, destinations and countdowns.
 
 Objects and images are under `build/<sample>/`; the shared Arduino cache defaults to `build/cache/`. All are ignored. To rebuild cleanly, remove that sample's generated build folder and run the build again. Do not erase your credential header.
 
@@ -31,7 +32,7 @@ sh scripts/build_firmware.sh synology
 
 An ARM64 Arduino CLI does not make the ESP8266 core's bundled host executables ARM64. The stock 3.1.2 macOS tool bundle can require Rosetta. Alternatively use an isolated native build kit whose Xtensa compiler, Arduino ctags, Python launcher and any filesystem tools run on ARM64. The samples were built with an ESPHome native `xtensa-lx106-elf` GCC 10.3.0-esphome.2 toolchain configured for this Arduino core.
 
-A compiler replacement must retain the core's expected directory/recipe layout. Confirm versions and run both sample builds; do not assume an arbitrary compiler is compatible. This repository includes no downloaded executables, workstation paths or native-kit archive. A previously configured kit can be selected using the environment variables above.
+A compiler replacement must retain the core's expected directory/recipe layout. Confirm versions and run the affected sample builds; do not assume an arbitrary compiler is compatible. This repository includes no downloaded executables, workstation paths or native-kit archive. A previously configured kit can be selected using the environment variables above.
 
 ## Image validation
 

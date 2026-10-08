@@ -1,0 +1,32 @@
+{
+  "station": "PAD",
+  "operators": "all",
+  "demo": false,
+  "railBase": "https://data.rtt.io",
+  "schedule": {
+    "start": "06:00",
+    "end": "23:00",
+    "allDay": false,
+    "default": {
+      "mode": "departures",
+      "intervalMinutes": 5,
+      "direction": "both"
+    },
+    "rules": [
+      {
+        "start": "06:00",
+        "end": "09:00",
+        "mode": "departures",
+        "intervalMinutes": 1,
+        "direction": "both"
+      },
+      {
+        "start": "17:00",
+        "end": "19:00",
+        "mode": "arrivals",
+        "intervalMinutes": 2,
+        "direction": "both"
+      }
+    ]
+  }
+}

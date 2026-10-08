@@ -1,0 +1,280 @@
+{
+  "systemStatus": {
+    "realtimeNetworkRail": "OK",
+    "rttCore": "OK"
+  },
+  "query": {
+    "location": {
+      "namespace": "gb-nr",
+      "description": "London Paddington",
+      "shortCodes": [
+        "PAD"
+      ]
+    },
+    "timeFrom": "2026-10-08T09:42:00Z"
+  },
+  "reasons": [],
+  "services": [
+    {
+      "scheduleMetadata": {
+        "operator": {
+          "code": "GW",
+          "name": "Sample operator"
+        },
+        "inPassengerService": true,
+        "modeType": "TRAIN"
+      },
+      "temporalData": {
+        "scheduledCallType": "ADVERTISED_OPEN",
+        "realtimeCallType": "ADVERTISED_OPEN",
+        "displayAs": "CALL",
+        "departure": {
+          "scheduleAdvertised": "2026-10-08T10:35:00+01:00",
+          "isCancelled": false,
+          "realtimeForecast": "2026-10-08T10:53:00+01:00"
+        }
+      },
+      "locationMetadata": {
+        "platform": {
+          "planned": "4",
+          "actual": null
+        }
+      },
+      "origin": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Reading",
+            "shortCodes": [
+              "RDG"
+            ]
+          }
+        }
+      ],
+      "destination": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Reading",
+            "shortCodes": [
+              "RDG"
+            ]
+          }
+        }
+      ],
+      "reasons": [
+        {
+          "type": "DELAY",
+          "shortText": "Late incoming train",
+          "longText": null
+        }
+      ]
+    },
+    {
+      "scheduleMetadata": {
+        "operator": {
+          "code": "XR",
+          "name": "Sample operator"
+        },
+        "inPassengerService": true,
+        "modeType": "TRAIN"
+      },
+      "temporalData": {
+        "scheduledCallType": "ADVERTISED_OPEN",
+        "realtimeCallType": "ADVERTISED_OPEN",
+        "displayAs": "CALL",
+        "departure": {
+          "scheduleAdvertised": "2026-10-08T10:51:00+01:00",
+          "isCancelled": false,
+          "realtimeForecast": "2026-10-08T10:51:00+01:00"
+        }
+      },
+      "locationMetadata": {
+        "platform": {
+          "planned": "4",
+          "actual": null
+        }
+      },
+      "origin": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Reading",
+            "shortCodes": [
+              "RDG"
+            ]
+          }
+        }
+      ],
+      "destination": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Abbey Wood",
+            "shortCodes": [
+              "ABW"
+            ]
+          }
+        }
+      ],
+      "reasons": []
+    },
+    {
+      "scheduleMetadata": {
+        "operator": {
+          "code": "GW",
+          "name": "Sample operator"
+        },
+        "inPassengerService": true,
+        "modeType": "TRAIN"
+      },
+      "temporalData": {
+        "scheduledCallType": "ADVERTISED_OPEN",
+        "realtimeCallType": null,
+        "displayAs": "CANCELLED",
+        "departure": {
+          "scheduleAdvertised": "2026-10-08T11:03:00+01:00",
+          "isCancelled": true
+        }
+      },
+      "locationMetadata": {
+        "platform": {
+          "planned": "4",
+          "actual": null
+        }
+      },
+      "origin": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Abbey Wood",
+            "shortCodes": [
+              "ABW"
+            ]
+          }
+        }
+      ],
+      "destination": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Reading",
+            "shortCodes": [
+              "RDG"
+            ]
+          }
+        }
+      ],
+      "reasons": [
+        {
+          "type": "CANCEL",
+          "shortText": "Signalling fault",
+          "longText": null
+        }
+      ]
+    },
+    {
+      "scheduleMetadata": {
+        "operator": {
+          "code": "XR",
+          "name": "Sample operator"
+        },
+        "inPassengerService": true,
+        "modeType": "TRAIN"
+      },
+      "temporalData": {
+        "scheduledCallType": "ADVERTISED_OPEN",
+        "realtimeCallType": "ADVERTISED_OPEN",
+        "displayAs": "CALL",
+        "departure": {
+          "scheduleAdvertised": "2026-10-08T11:18:00+01:00",
+          "isCancelled": false
+        }
+      },
+      "locationMetadata": {
+        "platform": {
+          "planned": "4",
+          "actual": null
+        }
+      },
+      "origin": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Abbey Wood",
+            "shortCodes": [
+              "ABW"
+            ]
+          }
+        }
+      ],
+      "destination": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Reading",
+            "shortCodes": [
+              "RDG"
+            ]
+          }
+        }
+      ],
+      "reasons": [
+        {
+          "type": "DELAY",
+          "shortText": "Awaiting an update",
+          "longText": null
+        }
+      ]
+    },
+    {
+      "scheduleMetadata": {
+        "operator": {
+          "code": "GW",
+          "name": "Sample operator"
+        },
+        "inPassengerService": true,
+        "modeType": "TRAIN"
+      },
+      "temporalData": {
+        "scheduledCallType": "ADVERTISED_OPEN",
+        "realtimeCallType": "ADVERTISED_OPEN",
+        "displayAs": "CALL",
+        "departure": {
+          "scheduleAdvertised": "2026-10-08T11:22:00+01:00",
+          "isCancelled": false,
+          "realtimeForecast": "2026-10-08T11:23:00+01:00"
+        }
+      },
+      "locationMetadata": {
+        "platform": {
+          "planned": "4",
+          "actual": null
+        }
+      },
+      "origin": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Abbey Wood",
+            "shortCodes": [
+              "ABW"
+            ]
+          }
+        }
+      ],
+      "destination": [
+        {
+          "location": {
+            "namespace": "gb-nr",
+            "description": "Oxford",
+            "shortCodes": [
+              "OXF"
+            ]
+          }
+        }
+      ],
+      "reasons": []
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 ## Start from a sample
 
-Use the NAS sketch as the reference for incremental drawing, complete telemetry snapshots, stale-data warnings and persistent brightness. Use the limits sketch for compact cards and partial form updates. Both demonstrate Wi-Fi provisioning and authenticated web OTA. Install one sketch on the device at a time.
+Use the NAS sketch as the reference for incremental drawing, complete telemetry snapshots, stale-data warnings and persistent brightness. Use the train sketch for direct HTTPS fetching, a bounded JSON parser, station-dependent web settings and daily arrivals/departures schedules. All demonstrate Wi-Fi provisioning and authenticated web OTA. Install one sketch on the device at a time.
 
 Create `firmware/esp_your_sample/esp_your_sample.ino`: Arduino requires the main sketch filename to match its folder. Copy only the needed sample source files, retaining attribution for inherited code. Add an `ota_credentials.h.example`, never a real password. Register the new sample in the build script's `case` and the credential generator's `SKETCHES`, then document its payload and add a synthetic preview.
 
@@ -16,7 +16,7 @@ Put numerical and state logic in a small header that can also compile on the hos
 
 Describe every field, its unit, whether it is required, and what an unavailable sensor means. Use `application/x-www-form-urlencoded` for these examples. Missing or invalid values must not become plausible zero readings. Validate finite numbers, ranges, payload length and completeness before replacing state.
 
-The NAS `/nas` endpoint requires a complete snapshot and an explicit empty `storageWarnings` when healthy. It refuses incomplete snapshots, and invalid capacities become warnings. The limits `/limits` endpoint accepts partial metrics; omitted fields retain their previous values. Choose deliberately between these semantics.
+The NAS `/nas` endpoint requires a complete snapshot and an explicit empty `storageWarnings` when healthy. It refuses incomplete snapshots, and invalid capacities become warnings. Document whether each new endpoint requires a complete snapshot or accepts partial updates; omitted fields must have an explicit meaning.
 
 Keep fault reasons visible. Do not use a healthy volume summary to mask a degraded storage pool or missing drive. Use an expected inventory to detect disappearance, and distinguish maintenance from failure. Mark stale readings after a bounded interval; never keep displaying an old healthy snapshot as if it were fresh.
 
@@ -40,6 +40,12 @@ Keep `ESP8266HTTPUpdateServer` and `/update` in a working firmware while experim
 
 Preserve failed-Wi-Fi recovery and serial recovery before changing networking or pin assignments. Keep IRAM, RAM and flash build reports under their limits. The reference NAS build uses about 38% RAM, 93% instruction/cache RAM and 32% of the selected application flash region; IRAM is the tightest resource. These figures can change with code and compiler options.
 
+## Train schedule implementation
+
+The train sample keeps daily phase selection and budgeting in `rail_schedule.h`, versioned settings and migration in `rail_settings.h`, and strict form-payload decoding in `rail_config_json.h`. The web UI posts the schedule as a JSON-encoded form field; see [the train contract](trains.md). Change the public fresh-install defaults in `RailConfig::defaults()`, not in migration code or a personal device configuration. Keep native parser tests independent of those defaults.
+
+Clear cached snapshots when station, board type or route changes, retain provider quota deadlines across schedule transitions, and suppress predictions outside active hours. Stream large web responses in small chunks rather than concatenating a station catalog into one heap allocation.
+
 ## Check a change
 
 1. Run `sh scripts/test.sh` and add meaningful tests for new parser/state behavior.
@@ -48,4 +54,4 @@ Preserve failed-Wi-Fi recovery and serial recovery before changing networking or
 4. On hardware, verify orientation, flicker, long warning text, brightness endpoints, reboot persistence, Wi-Fi fallback and authenticated OTA.
 5. Review `git diff --cached` and run the public-tree check before sharing source.
 
-Host tests cannot validate LCD wiring, actual SNMP support or a stock updater's format. The included CI runs host tests and compiles both samples with temporary credentials. It does not upload firmware or publish binaries.
+Host tests cannot validate LCD wiring, actual SNMP support or a stock updater's format. The included CI runs host tests and compiles all samples with temporary credentials. It does not upload firmware or publish binaries.
