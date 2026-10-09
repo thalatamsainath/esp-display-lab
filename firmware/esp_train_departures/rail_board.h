@@ -16,12 +16,15 @@ struct Train {
   char destination[81], operatorName[29], operatorCode[4], scheduled[6], expected[6], platform[9], reason[181];
   RailLogic::Forecast forecast;
 };
+constexpr unsigned PREDICTED_LIMIT=8, UNCONFIRMED_LIMIT=2, CANCELLED_LIMIT=2;
+constexpr unsigned UNCONFIRMED_OFFSET=PREDICTED_LIMIT, CANCELLED_OFFSET=PREDICTED_LIMIT+UNCONFIRMED_LIMIT;
+constexpr unsigned CACHE_LIMIT=PREDICTED_LIMIT+UNCONFIRMED_LIMIT+CANCELLED_LIMIT;
 struct Snapshot {
   char stationName[81], station[4], message[181];
   time_t generated;
   bool available,arrivals;
   unsigned count, runningCount;
-  Train trains[7];
+  Train trains[CACHE_LIMIT];
 };
 inline bool upcoming(const Train& train, time_t now) {
   // An unknown estimate stays explicitly unconfirmed. Only a supplied ETA can
@@ -34,6 +37,29 @@ inline const Train* nextTrain(const Snapshot& board, time_t now, const Train* sk
   for (unsigned i = 0; i < board.count; ++i)
     if (&board.trains[i] != skip && &board.trains[i] != secondSkip && upcoming(board.trains[i],now)) return &board.trains[i];
   return nullptr;
+}
+struct DisplayRows {const Train* primary=nullptr;const Train* following=nullptr;const Train* third=nullptr;};
+inline bool rowUpcoming(const Train& train,time_t now) {
+  return train.forecast.status==RailLogic::CANCELLED ? train.forecast.planned>=now : upcoming(train,now);
+}
+inline time_t rowTime(const Train& train) {return train.forecast.expected?train.forecast.expected:train.forecast.planned;}
+inline DisplayRows displayRows(const Snapshot& board,time_t now) {
+  DisplayRows rows;if(!board.available)return rows;
+  rows.primary=nextTrain(board,now);
+  const Train* cancellation=nullptr;
+  for(unsigned i=0;i<board.count;++i) {
+    const auto* train=&board.trains[i];
+    if(train==rows.primary || !rowUpcoming(*train,now))continue;
+    if(train->forecast.status==RailLogic::CANCELLED && (!cancellation || rowTime(*train)<rowTime(*cancellation)))cancellation=train;
+    if(!rows.following || rowTime(*train)<rowTime(*rows.following)) {rows.third=rows.following;rows.following=train;}
+    else if(!rows.third || rowTime(*train)<rowTime(*rows.third))rows.third=train;
+  }
+  // Keep the earliest cancellation visible, but never reserve a blank row
+  // above it. Cancelled services cannot become the primary countdown.
+  if(cancellation && cancellation!=rows.following && cancellation!=rows.third) {
+    if(rows.following)rows.third=cancellation;else rows.following=cancellation;
+  }
+  return rows;
 }
 inline void copy(char* target, size_t capacity, const char* value) {
   size_t out = 0;
@@ -119,7 +145,8 @@ inline bool parse(JsonObjectConst source, const char* station, const char* direc
     Train train = {};
     train.forecast = RailLogic::forecast(service[arrivals?"sta":"std"] | "",service[arrivals?"eta":"etd"] | "",service["isCancelled"] | false,result.generated);
     if (!train.forecast.planned) continue;
-    if (train.forecast.expected && train.forecast.expected < now-120) continue;
+    if (train.forecast.expected && train.forecast.expected < now) continue;
+    if (train.forecast.status==RailLogic::CANCELLED && train.forecast.planned<now) continue;
     copy(train.destination,sizeof(train.destination),service[arrivals?"origin":"destination"][0]["locationName"] | (arrivals?"Origin unavailable":"Destination unavailable"));
     if (!strcmp(train.destination,"London Paddington")) copy(train.destination,sizeof(train.destination),"Paddington");
     copy(train.operatorName,sizeof(train.operatorName),!strcmp(code,"GW") ? "GWR" : !strcmp(code,"XR") ? "Elizabeth line" : service["operator"] | "Rail service");
@@ -131,14 +158,14 @@ inline bool parse(JsonObjectConst source, const char* station, const char* direc
     }
     if (source["platformAvailable"] | true) copy(train.platform,sizeof(train.platform),service["platform"] | "");
     copy(train.reason,sizeof(train.reason),service[train.forecast.status == RailLogic::CANCELLED ? "cancelReason" : "delayReason"] | "");
-    if (train.forecast.status == RailLogic::CANCELLED) insert(result.trains+5,nc,2,train,false);
-    else if (train.forecast.expected) insert(result.trains,nr,3,train,true);
-    else insert(result.trains+3,nu,2,train,false);
+    if (train.forecast.status == RailLogic::CANCELLED) insert(result.trains+CANCELLED_OFFSET,nc,CANCELLED_LIMIT,train,false);
+    else if (train.forecast.expected) insert(result.trains,nr,PREDICTED_LIMIT,train,true);
+    else insert(result.trains+UNCONFIRMED_OFFSET,nu,UNCONFIRMED_LIMIT,train,false);
   }
   result.runningCount = nr;
   result.count=nr;
-  for (unsigned i = 0; i < nu; ++i) result.trains[result.count++] = result.trains[3+i];
-  for (unsigned i = 0; i < nc; ++i) result.trains[result.count++] = result.trains[5+i];
+  for (unsigned i = 0; i < nu; ++i) result.trains[result.count++] = result.trains[UNCONFIRMED_OFFSET+i];
+  for (unsigned i = 0; i < nc; ++i) result.trains[result.count++] = result.trains[CANCELLED_OFFSET+i];
   return true;
 }
 }

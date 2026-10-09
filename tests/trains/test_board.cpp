@@ -21,7 +21,7 @@ int main() {
   assert(parse(source,"PAD","west","all",now,board,error) && board.count==4);
   assert(parse(source,"PAD","both","elizabeth",now,board,error) && board.count==2);
   assert(parse(source,"PAD","to-RDG","all",now,board,error) && board.count==4);
-  assert(parse(source,"PAD","both","any",now,board,error) && board.count==5); // Three earliest running predictions retained.
+  assert(parse(source,"PAD","both","any",now,board,error) && board.count==6 && board.runningCount==4); // Hidden forecasts remain cached for later promotion.
   assert(!parse(source,"RDG","both","all",now,board,error));
   assert(!parse(source,"PAD","both","all",now+181,board,error));
   doc["platformAvailable"]=false;

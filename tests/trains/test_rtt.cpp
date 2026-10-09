@@ -45,6 +45,37 @@ int main() {
   assert(RailBoard::upcoming(board.trains[1],now)); // Delayed train's STD is past.
   assert(!RailBoard::upcoming(board.trains[4],now));
   {
+    // Use the same selector as the renderer: each promotion shifts both lower
+    // rows and brings a previously hidden forecast into view, without a fetch.
+    RailBoard::Snapshot cached={};cached.available=true;cached.count=5;
+    for(unsigned i=0;i<cached.count;++i) {
+      time_t due=now+(i+1)*60;
+      cached.trains[i].forecast={RailLogic::ON_TIME,due,due,0};
+    }
+    auto rows=RailBoard::displayRows(cached,now);
+    assert(rows.primary==&cached.trains[0] && rows.following==&cached.trains[1] && rows.third==&cached.trains[2]);
+    rows=RailBoard::displayRows(cached,now+61);
+    assert(rows.primary==&cached.trains[1] && rows.following==&cached.trains[2] && rows.third==&cached.trains[3]);
+    rows=RailBoard::displayRows(cached,now+121);
+    assert(rows.primary==&cached.trains[2] && rows.following==&cached.trains[3] && rows.third==&cached.trains[4]);
+    cached.count=6;cached.trains[5].forecast={RailLogic::CANCELLED,now+150,0,-1};
+    rows=RailBoard::displayRows(cached,now);
+    assert(rows.primary==&cached.trains[0] && rows.following==&cached.trains[1] && rows.third==&cached.trains[5]);
+    rows=RailBoard::displayRows(cached,now+61);
+    assert(rows.primary==&cached.trains[1] && rows.following==&cached.trains[5] && rows.third==&cached.trains[2]);
+    rows=RailBoard::displayRows(cached,now+151);
+    assert(rows.primary==&cached.trains[2] && rows.following==&cached.trains[3] && rows.third==&cached.trains[4]);
+    // Match the reported gap: just one running train and a cancellation. The
+    // cancellation belongs in the first following row, never the countdown.
+    cached.trains[1]=cached.trains[5];cached.count=2;
+    rows=RailBoard::displayRows(cached,now);
+    assert(rows.primary==&cached.trains[0] && rows.following==&cached.trains[1] && !rows.third);
+    rows=RailBoard::displayRows(cached,now+61);
+    assert(!rows.primary && rows.following==&cached.trains[1] && !rows.third);
+    cached.available=false;rows=RailBoard::displayRows(cached,now);
+    assert(!rows.primary && !rows.following && !rows.third);
+  }
+  {
     RailBoard::Snapshot cached=board;
     cached.count=3;
     assert(!RailBoard::nextTrain(cached,cached.trains[2].forecast.expected+1));
@@ -150,6 +181,13 @@ int main() {
   fixture["services"][1]["temporalData"]["arrival"].remove("realtimeForecast");
   assert(arrivals("west") && !board.trains[1].forecast.expected);
   assert(!deserializeJson(fixture,raw));
+  // A recently passed prediction must not consume a forecast slot or become
+  // the primary train, even if RTT has not yet reported an actual departure.
+  fixture["services"][1]["temporalData"]["departure"]["realtimeForecast"]="2026-10-08T10:41:30+01:00";
+  assert(parse(updated()) && board.count==4 && board.runningCount==2);
+  assert(RailBoard::displayRows(board,now).primary==&board.trains[0]);
+  assert(!strcmp(board.trains[0].destination,"Reading"));
+  assert(!deserializeJson(fixture,raw));
   // Hundreds of trains fit the same fixed per-service JSON capacity.
   std::string train;serializeJson(fixture["services"][0],train);
   fixture["services"].as<JsonArray>().clear();std::string stress=updated();
@@ -157,7 +195,21 @@ int main() {
   std::string list="\"services\":[";
   for(unsigned i=0;i<200;++i){if(i)list+=",";list+=train;}list+="]";
   stress.replace(at,13,list);
-  assert(parse(stress) && board.count==3);
+  assert(parse(stress) && board.count==RailBoard::PREDICTED_LIMIT);
+  // Fill all three cache partitions, then compact them without overlap or
+  // losing unconfirmed/cancelled entries at the expanded forecast boundary.
+  assert(!deserializeJson(fixture,raw));
+  std::string services;serializeJson(fixture["services"],services);
+  services=services.substr(1,services.size()-2);
+  fixture["services"].as<JsonArray>().clear();stress=updated();
+  at=stress.find("\"services\":[]");assert(at!=std::string::npos);
+  list="\"services\":[";
+  for(unsigned i=0;i<8;++i){if(i)list+=",";list+=services;}list+="]";
+  stress.replace(at,13,list);
+  assert(parse(stress) && board.count==RailBoard::CACHE_LIMIT && board.runningCount==RailBoard::PREDICTED_LIMIT);
+  assert(!board.trains[RailBoard::UNCONFIRMED_OFFSET].forecast.expected);
+  assert(board.trains[RailBoard::UNCONFIRMED_OFFSET].forecast.status!=RailLogic::CANCELLED);
+  assert(board.trains[RailBoard::CANCELLED_OFFSET].forecast.status==RailLogic::CANCELLED);
   assert(!RailLogic::stale(now+629,now,630) && RailLogic::stale(now+631,now,630));
   assert(RttPolicy::dailyRequests(360,1380,1)==1020 && RttPolicy::dailyRequests(360,1380,2)==510);
   assert(RttPolicy::dailyRequests(360,1320,1)==960 && RttPolicy::dailyRequests(360,360,1)==1440);
@@ -178,5 +230,5 @@ int main() {
   assert(RttPolicy::retrySeconds("60")==180 && RttPolicy::retrySeconds("3600")==3600);
   assert(RttPolicy::retrySeconds("999999999999999999")==604800 && RttPolicy::retrySeconds("bad")==180);
   assert(RttPolicy::due(10,0xfffffff0) && !RttPolicy::due(0xfffffff0,10));
-  puts("RTT streaming, cached departure promotion, direction, delay, missing estimates, cancellations, degraded feeds, quotas and UK quiet-hours checks passed.");
+  puts("RTT streaming, cached row compaction, departure promotion, direction, delay, missing estimates, cancellations, degraded feeds, quotas and UK quiet-hours checks passed.");
 }

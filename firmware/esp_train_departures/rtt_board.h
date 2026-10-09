@@ -118,7 +118,7 @@ inline void addService(JsonObjectConst service,const char* station,const char* d
     // entitled estimate if supplied, otherwise leave the countdown unknown.
     time_t expected=rttTime(activity[(activity["realtimeNoReport"] | false)?"realtimeEstimate":"realtimeForecast"] | "");
     if(!expected)expected=rttTime(activity["realtimeEstimate"] | "");
-    if(expected && expected<now-120) {if(diagnostics)++diagnostics->expired;return;}
+    if(expected && expected<now) {if(diagnostics)++diagnostics->expired;return;}
     if(expected && expected<now+24*3600) {
       train.forecast.expected=expected;
       train.forecast.delay=int((expected-planned)/60);
@@ -126,7 +126,7 @@ inline void addService(JsonObjectConst service,const char* station,const char* d
       if(train.forecast.delay<0)train.forecast.delay=0;
     }
   }
-  if(!train.forecast.expected && planned<now-120) {if(diagnostics)++diagnostics->expired;return;}
+  if(!train.forecast.expected && planned<now-(cancelled?0:120)) {if(diagnostics)++diagnostics->expired;return;}
   RailBoard::copy(train.destination,sizeof(train.destination),service[arrivals?"origin":"destination"][0]["location"]["description"] | (arrivals?"Origin unavailable":"Destination unavailable"));
   if(!strcmp(train.destination,"London Paddington"))RailBoard::copy(train.destination,sizeof(train.destination),"Paddington");
   RailBoard::copy(train.operatorName,sizeof(train.operatorName),!strcmp(code,"GW")?"GWR":!strcmp(code,"XR")?"Elizabeth line":schedule["operator"]["name"] | "Rail service");
@@ -142,9 +142,9 @@ inline void addService(JsonObjectConst service,const char* station,const char* d
     if(!cancelled && !train.forecast.expected)train.forecast.status=RailLogic::DELAYED;
     if(train.reason[0])break;
   }
-  if(cancelled)RailBoard::insert(result.trains+5,nc,2,train,false);
-  else if(train.forecast.expected)RailBoard::insert(result.trains,nr,3,train,true);
-  else RailBoard::insert(result.trains+3,nu,2,train,false);
+  if(cancelled)RailBoard::insert(result.trains+RailBoard::CANCELLED_OFFSET,nc,RailBoard::CANCELLED_LIMIT,train,false);
+  else if(train.forecast.expected)RailBoard::insert(result.trains,nr,RailBoard::PREDICTED_LIMIT,train,true);
+  else RailBoard::insert(result.trains+RailBoard::UNCONFIRMED_OFFSET,nu,RailBoard::UNCONFIRMED_LIMIT,train,false);
 }
 template<class Input> int nextChar(Input& input) {
   char ch;
@@ -213,8 +213,8 @@ template<class Input> bool decode(Input& input,JsonDocument& filter,JsonDocument
   }
   if(!foundQuery || !foundServices || !foundStatus) {error="Incomplete RTT response";return false;}
   result.runningCount=nr;result.count=nr;
-  for(unsigned i=0;i<nu;++i)result.trains[result.count++]=result.trains[3+i];
-  for(unsigned i=0;i<nc;++i)result.trains[result.count++]=result.trains[5+i];
+  for(unsigned i=0;i<nu;++i)result.trains[result.count++]=result.trains[RailBoard::UNCONFIRMED_OFFSET+i];
+  for(unsigned i=0;i<nc;++i)result.trains[result.count++]=result.trains[RailBoard::CANCELLED_OFFSET+i];
   if(!live)for(unsigned i=0;i<result.count;++i)if(result.trains[i].forecast.status!=RailLogic::CANCELLED) {
     result.trains[i].forecast.status=RailLogic::UNCONFIRMED;result.trains[i].forecast.expected=0;result.trains[i].expected[0]=0;result.trains[i].forecast.delay=-1;
   }

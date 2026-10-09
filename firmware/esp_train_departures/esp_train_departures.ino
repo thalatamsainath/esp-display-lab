@@ -155,13 +155,13 @@ String activeError() {
 }
 String stateJson() {
   String error=activeError(); time_t now=time(nullptr); bool first=true;const auto& rule=activeRule(now);
-  String out="{\"firmware\":\"train-schedule-rtt-1.7\",\"brightness\":"+String(brightness)+",\"hasData\":"+(hasData?"true":"false")+",\"demo\":"+(config.demo?"true":"false")+",\"error\":"+quote(error)+",\"ageSeconds\":"+(hasData?String(max(time_t(0),now-board.generated)):"null")+",\"quietHours\":"+(quietHours(now)?"true":"false")+",\"resumeAt\":"+quote(minutesLabel(config.schedule.start));
+  String out="{\"firmware\":\"train-schedule-rtt-1.8\",\"brightness\":"+String(brightness)+",\"hasData\":"+(hasData?"true":"false")+",\"demo\":"+(config.demo?"true":"false")+",\"error\":"+quote(error)+",\"ageSeconds\":"+(hasData?String(max(time_t(0),now-board.generated)):"null")+",\"quietHours\":"+(quietHours(now)?"true":"false")+",\"resumeAt\":"+quote(minutesLabel(config.schedule.start));
   out+=",\"mode\":"+quote(RailSchedule::modeName(rule.mode))+",\"intervalMinutes\":"+String(rule.interval)+",\"direction\":"+quote(rule.route)+",\"ruleIndex\":"+String(RailSchedule::at(config.schedule,now).index)+",\"trains\":[";
   // Suppress old station data and stale predictions rather than publishing a
   // plausible-looking countdown after a feed failure.
   if(boardMatches(now) && board.available && !quietHours(now) && !RailLogic::stale(now,board.generated,pollMs()/1000+30)) for(unsigned i=0;i<board.count;++i) {
     const auto& train=board.trains[i];
-    if(train.forecast.status!=RailLogic::CANCELLED && !RailBoard::upcoming(train,now))continue;
+    if(!RailBoard::rowUpcoming(train,now))continue;
     if(!first)out+=','; first=false;
     out+="{\"destination\":"+quote(train.destination)+",\"operator\":"+quote(train.operatorName)+",\"scheduled\":"+quote(train.scheduled)+",\"expected\":"+quote(train.expected)+",\"platform\":"+quote(train.platform)+",\"status\":"+quote(statusName(train.forecast.status))+",\"delay\":"+String(train.forecast.delay)+",\"reason\":"+quote(train.reason)+"}";
   }
@@ -392,6 +392,15 @@ String trainStatus(const RailBoard::Train& train) {
   if(train.forecast.delay>0) return "+"+String(train.forecast.delay)+" min";
   return "On time";
 }
+bool cancelledRow(const RailBoard::Train* train) {return train && train->forecast.status==RailLogic::CANCELLED;}
+void trainRowText(const RailBoard::Train* train,String& left,String& right) {
+  if(!train)return;
+  if(cancelledRow(train) && train->reason[0] && ((millis()/6000)%2)) {left=textPage(train->reason,millis()/12000,220);return;}
+  left=String(train->scheduled)+" "+train->destination;
+  right=cancelledRow(train)?"CANCELLED":train->forecast.expected?String(train->expected)+(train->forecast.delay>0?" +"+String(train->forecast.delay):""):train->forecast.status==RailLogic::DELAYED?"Delayed":"Time TBC";
+  if(uiWidth(right)>100)right=cancelledRow(train)?"CANCELLED":train->forecast.status==RailLogic::DELAYED?"Delayed":"Time TBC";
+  left=fitText(left,220-uiWidth(right)-8);
+}
 void render() {
   if(apMode) return;
   if(!screenInitialized) { tft.fillScreen(BG); for(auto& value:fields)value=""; screenInitialized=true; }
@@ -411,7 +420,8 @@ void render() {
     uiRightText(mode,230,37,2,AMBER);
   }
   bool usable=!quiet && boardMatches(now) && !RailLogic::stale(now,board.generated,pollMs()/1000+30) && board.available;
-  const RailBoard::Train* hero=usable?RailBoard::nextTrain(board,now):nullptr;
+  RailBoard::DisplayRows rows;if(usable)rows=RailBoard::displayRows(board,now);
+  const auto* hero=rows.primary;
   String heroIdentity=hero?String(hero->destination)+":"+hero->operatorCode+":"+hero->operatorName+":"+String(hero->forecast.expected)+":"+(arrivals?"arrivals":"departures"):"none:"+error+":"+(hasData?String(board.count):"0")+":"+(usable?"ready":"waiting")+":"+(board.available?"open":"closed")+":"+(quiet?"night":"day");
   if(changed(2,heroIdentity,56,55)) {
     tft.fillRect(10,56,3,105,BG);
@@ -442,41 +452,22 @@ void render() {
     uiText(fitText(left,220-uiWidth(status)-8),10,166);
     uiRightText(status,230,166,2,hero->forecast.status==RailLogic::ON_TIME?GREEN:AMBER);
   }
-  const RailBoard::Train* following=usable?RailBoard::nextTrain(board,now,hero):nullptr;
-  const RailBoard::Train* alert=nullptr;
-  if(usable) for(unsigned i=0;i<board.count;++i) {
-    const auto& train=board.trains[i];
-    if(train.forecast.status==RailLogic::CANCELLED && !alert)alert=&train;
-  }
-  String row=following?String(following->scheduled)+" "+following->destination:"";
-  String rowRight=following?trainStatus(*following):"";
-  if(following && following->forecast.expected && following->forecast.delay>0)rowRight=String(following->expected)+" +"+String(following->forecast.delay);
-  if(rowRight=="On time")rowRight=following->expected;
-  if(uiWidth(rowRight)>100)rowRight=following->forecast.status==RailLogic::DELAYED?"Delayed":"Time TBC";
-  if(changed(5,row+":"+rowRight+":"+(following?String(following->operatorCode):""),190,22)) {
+  const auto* following=rows.following;
+  String row,rowRight;trainRowText(following,row,rowRight);
+  uint16_t rowColor=cancelledRow(following)?RED:following?trainColor(*following):MUTED;
+  if(changed(5,row+":"+rowRight+":"+String(rowColor),190,22)) {
     tft.drawFastHLine(10,190,220,TRACK);
-    uiText(fitText(row,220-uiWidth(rowRight)-8),10,194,2,following?trainColor(*following):MUTED);
-    uiRightText(rowRight,230,194,2,following && following->forecast.status==RailLogic::DELAYED?AMBER:FG);
+    uiText(row,10,194,2,rowColor);
+    uiRightText(rowRight,230,194,2,cancelledRow(following)?RED:following && following->forecast.status==RailLogic::DELAYED?AMBER:FG);
   }
-  const auto* third=usable?RailBoard::nextTrain(board,now,hero,following):nullptr;
+  const auto* third=rows.third;
   String lower,lowerRight;
   uint16_t lowerColor=MUTED;
-  if(alert) {
-    lowerColor=RED;
-    bool reasonPhase=((millis()/6000)%2)!=0;
-    if(reasonPhase && alert->reason[0])lower=textPage(alert->reason,millis()/12000,220);
-    else {
-      lowerRight="CANCELLED";
-      lower=fitText(String(alert->scheduled)+" "+alert->destination,220-uiWidth(lowerRight)-8);
-    }
-  } else if(error.length()) { lower=textPage(error,millis()/6000,220); lowerColor=AMBER; }
-  else if(hero && hero->reason[0]) { lower=textPage(hero->reason,millis()/6000,220); lowerColor=AMBER; }
+  if(cancelledRow(third)) {trainRowText(third,lower,lowerRight);lowerColor=RED;}
+  else if(error.length()) {lower=textPage(error,millis()/6000,220);lowerColor=AMBER;}
+  else if(hero && hero->reason[0]) {lower=textPage(hero->reason,millis()/6000,220);lowerColor=AMBER;}
   else if(!quiet && board.message[0])lower=textPage(board.message,millis()/6000,220);
-  else if(third) {
-    lowerRight=third->forecast.expected?String(third->expected)+(third->forecast.delay>0?" +"+String(third->forecast.delay):""):third->forecast.status==RailLogic::DELAYED?"Delayed":"Time TBC";
-    if(uiWidth(lowerRight)>100)lowerRight="Time TBC";
-    lower=fitText(String(third->scheduled)+" "+third->destination,220-uiWidth(lowerRight)-8);lowerColor=trainColor(*third);
-  }
+  else if(third) {trainRowText(third,lower,lowerRight);lowerColor=trainColor(*third);}
   if(changed(6,lower+":"+lowerRight+":"+String(lowerColor),217,18)) {
     uiText(lower,10,217,2,lowerColor);
     uiRightText(lowerRight,230,217,2,lowerColor);
