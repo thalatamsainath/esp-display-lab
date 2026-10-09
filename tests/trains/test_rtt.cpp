@@ -92,6 +92,20 @@ int main() {
   assert(parse(raw,"both","elizabeth") && board.count==2);
   // Intermediate calling-point filtering is performed by the server.
   assert(parse(raw,"to-TWY") && board.count==5);
+  // RTT can retain a generic reason after a service returns to on time. Drop
+  // placeholders during decode, and allow only a current delay to use a row.
+  fixture["services"][0]["reasons"][0]["shortText"]="unknown cause";
+  assert(parse(updated()) && !board.trains[1].reason[0]);
+  JsonObject reason=fixture["services"][0]["reasons"].createNestedObject();
+  reason["type"]="DELAY";reason["shortText"]="Late incoming train";
+  assert(parse(updated()) && !strcmp(board.trains[1].reason,"Late incoming train"));
+  assert(RailLogic::showDelayReason(board.trains[1].forecast,board.trains[1].reason));
+  fixture["services"][0]["temporalData"]["departure"]["scheduleAdvertised"]="2026-10-08T10:53:00+01:00";
+  assert(parse(updated()) && board.trains[1].forecast.status==RailLogic::ON_TIME);
+  assert(!RailLogic::showDelayReason(board.trains[1].forecast,board.trains[1].reason));
+  fixture["services"][2]["reasons"][0]["shortText"]="Unknown cause";
+  assert(parse(updated()) && !board.trains[4].reason[0] && board.trains[4].forecast.status==RailLogic::CANCELLED);
+  assert(!deserializeJson(fixture,raw));
   fixture["services"][1]["temporalData"]["departure"]["realtimeNoReport"]=true;
   assert(parse(updated()) && !board.trains[3].forecast.expected);
   fixture["services"][1]["temporalData"]["departure"]["realtimeEstimate"]="2026-10-08T10:55:00+01:00";

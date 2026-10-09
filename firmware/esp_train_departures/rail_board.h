@@ -158,6 +158,7 @@ inline bool parse(JsonObjectConst source, const char* station, const char* direc
     }
     if (source["platformAvailable"] | true) copy(train.platform,sizeof(train.platform),service["platform"] | "");
     copy(train.reason,sizeof(train.reason),service[train.forecast.status == RailLogic::CANCELLED ? "cancelReason" : "delayReason"] | "");
+    if(!RailLogic::usefulReason(train.reason))train.reason[0]=0;
     if (train.forecast.status == RailLogic::CANCELLED) insert(result.trains+CANCELLED_OFFSET,nc,CANCELLED_LIMIT,train,false);
     else if (train.forecast.expected) insert(result.trains,nr,PREDICTED_LIMIT,train,true);
     else insert(result.trains+UNCONFIRMED_OFFSET,nu,UNCONFIRMED_LIMIT,train,false);

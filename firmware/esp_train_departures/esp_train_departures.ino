@@ -155,7 +155,7 @@ String activeError() {
 }
 String stateJson() {
   String error=activeError(); time_t now=time(nullptr); bool first=true;const auto& rule=activeRule(now);
-  String out="{\"firmware\":\"train-schedule-rtt-1.8\",\"brightness\":"+String(brightness)+",\"hasData\":"+(hasData?"true":"false")+",\"demo\":"+(config.demo?"true":"false")+",\"error\":"+quote(error)+",\"ageSeconds\":"+(hasData?String(max(time_t(0),now-board.generated)):"null")+",\"quietHours\":"+(quietHours(now)?"true":"false")+",\"resumeAt\":"+quote(minutesLabel(config.schedule.start));
+  String out="{\"firmware\":\"train-schedule-rtt-1.9\",\"brightness\":"+String(brightness)+",\"hasData\":"+(hasData?"true":"false")+",\"demo\":"+(config.demo?"true":"false")+",\"error\":"+quote(error)+",\"ageSeconds\":"+(hasData?String(max(time_t(0),now-board.generated)):"null")+",\"quietHours\":"+(quietHours(now)?"true":"false")+",\"resumeAt\":"+quote(minutesLabel(config.schedule.start));
   out+=",\"mode\":"+quote(RailSchedule::modeName(rule.mode))+",\"intervalMinutes\":"+String(rule.interval)+",\"direction\":"+quote(rule.route)+",\"ruleIndex\":"+String(RailSchedule::at(config.schedule,now).index)+",\"trains\":[";
   // Suppress old station data and stale predictions rather than publishing a
   // plausible-looking countdown after a feed failure.
@@ -465,8 +465,8 @@ void render() {
   uint16_t lowerColor=MUTED;
   if(cancelledRow(third)) {trainRowText(third,lower,lowerRight);lowerColor=RED;}
   else if(error.length()) {lower=textPage(error,millis()/6000,220);lowerColor=AMBER;}
-  else if(hero && hero->reason[0]) {lower=textPage(hero->reason,millis()/6000,220);lowerColor=AMBER;}
-  else if(!quiet && board.message[0])lower=textPage(board.message,millis()/6000,220);
+  else if(hero && RailLogic::showDelayReason(hero->forecast,hero->reason)) {lower=textPage(hero->reason,millis()/6000,220);lowerColor=AMBER;}
+  else if(!quiet && RailLogic::usefulReason(board.message))lower=textPage(board.message,millis()/6000,220);
   else if(third) {trainRowText(third,lower,lowerRight);lowerColor=trainColor(*third);}
   if(changed(6,lower+":"+lowerRight+":"+String(lowerColor),217,18)) {
     uiText(lower,10,217,2,lowerColor);

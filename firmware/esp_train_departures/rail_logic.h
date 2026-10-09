@@ -93,6 +93,24 @@ inline time_t isoTime(const char* value) {
 }
 enum Status { ON_TIME, DELAYED, CANCELLED, UNCONFIRMED };
 struct Forecast { Status status; time_t planned; time_t expected; int delay; };
+inline bool usefulReason(const char* reason) {
+  if(!reason)return false;
+  while(isspace(static_cast<unsigned char>(*reason)))++reason;
+  size_t length=strlen(reason);
+  while(length && (isspace(static_cast<unsigned char>(reason[length-1])) || reason[length-1]=='.'))--length;
+  if(!length)return false;
+  static const char* const placeholders[]={"unknown cause","unknown reason","unknown"};
+  for(const char* placeholder:placeholders) {
+    if(strlen(placeholder)!=length)continue;
+    size_t i=0;
+    while(i<length && tolower(static_cast<unsigned char>(reason[i]))==placeholder[i])++i;
+    if(i==length)return false;
+  }
+  return true;
+}
+inline bool showDelayReason(const Forecast& forecast,const char* reason) {
+  return forecast.status==DELAYED && usefulReason(reason);
+}
 inline Forecast forecast(const char* planned, const char* estimate, bool cancelled, time_t reference) {
   Forecast result = {UNCONFIRMED, nearClock(planned,reference), 0, -1};
   if (cancelled || (estimate && !strcmp(estimate,"Cancelled"))) { result.status = CANCELLED; return result; }

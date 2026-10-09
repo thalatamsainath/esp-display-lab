@@ -27,6 +27,15 @@ int main() {
   assert(forecast("10:46","",false,now).status==UNCONFIRMED);
   auto cancelled=forecast("11:03","11:03",true,now);
   assert(cancelled.status==CANCELLED && !cancelled.expected);
+  assert(!showDelayReason(ontime,"unknown cause"));
+  assert(!showDelayReason(ontime,"Earlier signalling fault")); // A retained reason is not a current delay.
+  assert(!showDelayReason(delay,"unknown cause"));
+  assert(!showDelayReason(delay,"  UNKNOWN CAUSE.  "));
+  assert(!showDelayReason(delay,"unknown reason") && !showDelayReason(delay,"unknown"));
+  assert(!showDelayReason(delay,"") && !showDelayReason(delay,nullptr));
+  assert(showDelayReason(delay,"Signalling fault"));
+  assert(showDelayReason(unknown,"Waiting for a platform"));
+  assert(!showDelayReason(cancelled,"Signalling fault"));
   assert(forecast("11:03","Cancelled",false,now).status==CANCELLED);
   assert(!forecast("25:99","On time",false,now).expected);
   time_t midnight=isoTime("2026-10-08T23:58:00+01:00");

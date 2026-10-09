@@ -139,6 +139,7 @@ inline void addService(JsonObjectConst service,const char* station,const char* d
     const char* text=reason["longText"] | "";
     if(!*text)text=reason["shortText"] | "";
     RailBoard::copy(train.reason,sizeof(train.reason),text);
+    if(!RailLogic::usefulReason(train.reason)) {train.reason[0]=0;continue;}
     if(!cancelled && !train.forecast.expected)train.forecast.status=RailLogic::DELAYED;
     if(train.reason[0])break;
   }
